@@ -17,7 +17,7 @@ class SimpleChessEngine {
     private var skillLevel = 1 // 0 = easy, 1 = medium, 2 = hard, 3 = expert
     
     fun reset() {
-        board.loadFromFen(Board.STANDARD_FEN)
+        board.loadFromFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
     }
     
     fun setDifficulty(level: Int) {
