@@ -2,6 +2,11 @@
 
 Python satranç motorundan dönüştürülmüş Android satranç oyunu uygulaması.
 
+## 🚨 APK Oluştururken Hata mı Alıyorsunuz?
+
+**Hızlı Çözüm:** [QUICKFIX_TR.md](QUICKFIX_TR.md) dosyasına bakın.  
+**Detaylı Çözümler:** [TROUBLESHOOTING_TR.md](TROUBLESHOOTING_TR.md) dosyasına bakın.
+
 ## Özellikler
 
 - ♟️ Tam işlevsel satranç oyunu
