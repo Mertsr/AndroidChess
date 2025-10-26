@@ -1,0 +1,20 @@
+## This file must *NOT* be checked into Version Control Systems,
+# as it contains information specific to your local configuration.
+#
+# Location of the Android SDK. This must be set for the build to work.
+# On Mac OS: /Users/USERNAME/Library/Android/sdk
+# On Linux: /home/USERNAME/Android/Sdk
+# On Windows: C:\\Users\\USERNAME\\AppData\\Local\\Android\\Sdk
+#
+# Uncomment and modify the line below according to your system:
+#
+# sdk.dir=/path/to/your/Android/Sdk
+
+# Example for Mac:
+# sdk.dir=/Users/john/Library/Android/sdk
+
+# Example for Linux:
+# sdk.dir=/home/john/Android/Sdk
+
+# Example for Windows (note the double backslashes):
+# sdk.dir=C:\\Users\\john\\AppData\\Local\\Android\\Sdk
