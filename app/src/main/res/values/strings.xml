@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Satranç Robotu</string>
+    <string name="difficulty_easy">Kolay</string>
+    <string name="difficulty_medium">Orta</string>
+    <string name="difficulty_hard">Zor</string>
+    <string name="difficulty_expert">Uzman</string>
+    <string name="new_game">Yeni Oyun</string>
+    <string name="reset">Sıfırla</string>
+    <string name="your_turn">Senin sıran</string>
+    <string name="robot_thinking">Robot düşünüyor...</string>
+    <string name="game_over">Oyun Bitti</string>
+    <string name="you_win">Kazandın!</string>
+    <string name="robot_wins">Robot Kazandı!</string>
+    <string name="draw">Berabere!</string>
+    <string name="invalid_move">Geçersiz hamle!</string>
+    <string name="select_piece">Taş seç</string>
+    <string name="difficulty_label">Zorluk:</string>
+    <string name="robot_move">Robot hamlesi: %s</string>
+</resources>
