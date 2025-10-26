@@ -13,11 +13,15 @@ import kotlin.random.Random
  */
 class SimpleChessEngine {
     
+    companion object {
+        private const val STANDARD_CHESS_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+    }
+    
     val board = Board()
     private var skillLevel = 1 // 0 = easy, 1 = medium, 2 = hard, 3 = expert
     
     fun reset() {
-        board.loadFromFen(Board.STANDARD_FEN)
+        board.loadFromFen(STANDARD_CHESS_FEN)
     }
     
     fun setDifficulty(level: Int) {
