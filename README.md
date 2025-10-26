@@ -20,9 +20,11 @@ Python satranç motorundan dönüştürülmüş Android satranç oyunu uygulamas
 ## Gereksinimler
 
 - Android Studio Arctic Fox veya üzeri
-- JDK 8 veya üzeri
-- Android SDK 24 (Android 7.0) veya üzeri
+- JDK 17 veya üzeri (Android Gradle Plugin 8.0 için gerekli)
+- Android SDK 24 (Android 7.0) minimum
+- Android SDK 34 (Android 14) hedef
 - Gradle 8.0
+- Android Gradle Plugin 8.0.2
 
 ## Kurulum ve APK Oluşturma
 
@@ -173,6 +175,10 @@ Python kodunuza benzer şekilde, Android uygulaması da:
 - **Uzman**: Derin pozisyon analizi ve materyal değerlendirmesi
 
 ## Sorun Giderme
+
+**APK oluştururken hata alıyorsanız, detaylı çözümler için [TROUBLESHOOTING_TR.md](TROUBLESHOOTING_TR.md) dosyasına bakın.**
+
+Ayrıca detaylı build kılavuzu için: [BUILD_GUIDE.md](BUILD_GUIDE.md)
 
 ### Gradle Sync Hatası
 
