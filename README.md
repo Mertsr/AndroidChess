@@ -2,6 +2,15 @@
 
 Python satranç motorundan dönüştürülmüş Android satranç oyunu uygulaması.
 
+## 🚀 Hızlı Başlangıç
+
+**Uygulama düzeltildi ve hazır!** ✅
+
+APK oluşturmak için:
+1. 📖 **[HIZLI_BASLANGIC.md](HIZLI_BASLANGIC.md)** - Türkçe hızlı kılavuz
+2. 📊 **[BUILD_STATUS.md](BUILD_STATUS.md)** - Teknik detaylar
+3. 🔧 **[DUZELTME_RAPORU.md](DUZELTME_RAPORU.md)** - Düzeltme detayları
+
 ## Özellikler
 
 - ♟️ Tam işlevsel satranç oyunu
