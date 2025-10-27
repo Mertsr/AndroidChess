@@ -224,7 +224,7 @@ Bu proje açık kaynak kodludur.
 
 ## İletişim
 
-Proje Sahibi: Mert & Sara
+Proje Sahibi: Mert Saraç
 GitHub: [@Mertsr](https://github.com/Mertsr)
 
 ## Teşekkürler
