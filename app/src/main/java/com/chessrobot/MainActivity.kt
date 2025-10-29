@@ -40,8 +40,13 @@ class MainActivity : AppCompatActivity() {
         // Setup difficulty spinner
         setupDifficultySpinner()
 
+        // Get difficulty from intent
+        val difficulty = intent.getIntExtra("DIFFICULTY", 1)
+        difficultySpinner.setSelection(difficulty)
+
         // Initialize chess engine
         chessEngine = SimpleChessEngine()
+        chessEngine.setDifficulty(difficulty)
 
         // Setup chess board callback
         chessBoardView.setMoveCallback { from, to ->
