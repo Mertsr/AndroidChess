@@ -79,226 +79,251 @@ class SimpleChessEngine {
     }
     
     private fun selectMediumMove(moves: List<Move>): Move {
-        // Medium: Prioritize captures and basic tactics
+        // Medium: Strong material evaluation with basic tactics
         val scoredMoves = moves.map { move ->
             var score = 0
             
-            // Strongly prefer capturing moves
+            // Heavily prioritize good captures
             val capturedPiece = board.getPiece(move.to)
-            if (capturedPiece != com.github.bhlangonijr.chesslib.Piece.NONE) {
-                score += getPieceValue(capturedPiece) * 2
+            val captureValue = getPieceValue(capturedPiece)
+            
+            board.doMove(move)
+            
+            // Check if our piece is now attacked
+            val movingPiece = board.getPiece(move.to)
+            val ourPieceValue = getPieceValue(movingPiece)
+            
+            // Simple exchange evaluation: capture value - risk
+            if (captureValue > 0) {
+                // Good capture if we gain material
+                if (captureValue >= ourPieceValue) {
+                    score += captureValue * 10  // Winning or equal exchange
+                } else {
+                    score += (captureValue - ourPieceValue / 2)  // Losing exchange is bad
+                }
             }
             
-            // Prefer center control
-            if (move.to in listOf(Square.E4, Square.E5, Square.D4, Square.D5, 
-                                   Square.C4, Square.C5, Square.F4, Square.F5)) {
-                score += 15
+            // Check bonus
+            if (board.isKingAttacked) {
+                score += 80
             }
             
-            // Add some randomness to make it less predictable
-            score += Random.nextInt(20)
+            // Mobility bonus (number of legal moves after this move)
+            val mobilityAfter = MoveGenerator.generateLegalMoves(board).size
+            score += mobilityAfter
+            
+            board.undoMove()
+            
+            // Center control
+            if (move.to in listOf(Square.E4, Square.E5, Square.D4, Square.D5)) {
+                score += 30
+            }
+            
+            // Small randomness for variety
+            score += Random.nextInt(5)
             
             move to score
         }
         
         val sortedMoves = scoredMoves.sortedByDescending { it.second }
-        // Pick from top 5 moves with some randomness
-        val topMoves = sortedMoves.take(5)
+        // Pick from top 3 moves
+        val topMoves = sortedMoves.take(3).ifEmpty { scoredMoves.take(1) }
         return topMoves[Random.nextInt(topMoves.size)].first
     }
     
     private fun selectHardMove(moves: List<Move>): Move {
-        // Hard: Better evaluation with threats and piece development
+        // Hard: Full position evaluation with tactical awareness
         val scoredMoves = moves.map { move ->
-            var score = 0
+            var score = evaluatePositionAfterMove(move)
             
-            // Evaluate capture value
-            val capturedPiece = board.getPiece(move.to)
-            score += getPieceValue(capturedPiece) * 3
-            
-            // Simulate move and check for threats
-            board.doMove(move)
-            
-            // Bonus for checks
-            if (board.isKingAttacked) {
-                score += 40
-            }
-            
-            // Evaluate material balance
-            var materialBalance = 0
-            for (square in Square.values()) {
-                val piece = board.getPiece(square)
-                if (piece != com.github.bhlangonijr.chesslib.Piece.NONE) {
-                    val value = getPieceValue(piece)
-                    if (piece.pieceSide == Side.BLACK) {
-                        materialBalance += value
-                    } else {
-                        materialBalance -= value
-                    }
-                }
-            }
-            score += materialBalance / 5
-            
-            // Center control
-            if (move.to in listOf(Square.E4, Square.E5, Square.D4, Square.D5)) {
-                score += 25
-            }
-            
-            // Piece development (move pieces from back rank)
-            if (move.from.rank == com.github.bhlangonijr.chesslib.Rank.RANK_8 || 
-                move.from.rank == com.github.bhlangonijr.chesslib.Rank.RANK_7) {
-                score += 10
-            }
-            
-            board.undoMove()
-            
-            // Add small randomness
-            score += Random.nextInt(10)
+            // Minimal randomness
+            score += Random.nextInt(3)
             
             move to score
         }
         
         val sortedMoves = scoredMoves.sortedByDescending { it.second }
-        // Pick from top 2 moves
-        val topMoves = sortedMoves.take(2)
-        return topMoves[Random.nextInt(topMoves.size)].first
-    }
-    
-    private fun selectExpertMove(moves: List<Move>): Move {
-        // Expert: Deep evaluation with positional understanding
-        val scoredMoves = moves.map { move ->
-            var score = evaluateMoveDeep(move)
-            
-            // Additional expert-level analysis
-            board.doMove(move)
-            
-            // Look ahead one more move for opponent responses
-            val opponentMoves = MoveGenerator.generateLegalMoves(board)
-            if (opponentMoves.isNotEmpty()) {
-                // Find opponent's best response (including checks and captures)
-                val bestOpponentScore = opponentMoves.maxOfOrNull { oppMove ->
-                    var oppScore = 0
-                    // Evaluate the captured piece value
-                    oppScore += getPieceValue(board.getPiece(oppMove.to))
-                    // Check if opponent can give check
-                    board.doMove(oppMove)
-                    if (board.isKingAttacked) {
-                        oppScore += 20  // Opponent checking is bad for us
-                    }
-                    board.undoMove()
-                    oppScore
-                } ?: 0
-                // Penalize moves that allow strong opponent responses
-                score -= bestOpponentScore / 2
-            }
-            
-            // King safety - AI plays as BLACK, so check BLACK king
-            val kingSquare = board.getPieceLocation(com.github.bhlangonijr.chesslib.Piece.BLACK_KING).firstOrNull()
-            
-            if (kingSquare != null) {
-                // Prefer keeping king safe
-                val kingFile = kingSquare.file.ordinal
-                if (kingFile in 0..2 || kingFile in 5..7) {
-                    score += 15  // King on side is safer
-                }
-            }
-            
-            board.undoMove()
-            
-            move to score
+        // Always pick best move or second best
+        return if (sortedMoves.size > 1 && Random.nextFloat() < 0.2f) {
+            sortedMoves[1].first  // 20% chance to pick second best for variety
+        } else {
+            sortedMoves.first().first
         }
-        
-        val sortedMoves = scoredMoves.sortedByDescending { it.second }
-        // Always pick the best move (no randomness at expert level)
-        return sortedMoves.first().first
     }
     
-    private fun evaluateMove(move: Move): Int {
+    private fun evaluatePositionAfterMove(move: Move): Int {
         var score = 0
         
         // Capture value
         val capturedPiece = board.getPiece(move.to)
-        score += getPieceValue(capturedPiece)
+        val captureValue = getPieceValue(capturedPiece)
+        score += captureValue * 10
         
-        // Center control
-        if (move.to in listOf(Square.E4, Square.E5, Square.D4, Square.D5)) {
-            score += 10
-        }
-        
-        return score
-    }
-    
-    private fun evaluateMoveDeep(move: Move): Int {
-        var score = 0
-        
-        // Capture value with multiplier (not using evaluateMove to avoid double counting)
-        val capturedPiece = board.getPiece(move.to)
-        score += getPieceValue(capturedPiece) * 4
-        
-        // Center control
-        if (move.to in listOf(Square.E4, Square.E5, Square.D4, Square.D5)) {
-            score += 10
-        }
-        
-        // Simulate move and evaluate position
         board.doMove(move)
         
-        // Material count with better weighting
-        // AI plays as BLACK
-        var materialBalance = 0
-        var pieceActivity = 0
+        // Check bonus
+        if (board.isKingAttacked) {
+            score += 100
+        }
         
+        // Material count (total material advantage)
+        var materialBalance = 0
         for (square in Square.values()) {
             val piece = board.getPiece(square)
             if (piece != com.github.bhlangonijr.chesslib.Piece.NONE) {
                 val value = getPieceValue(piece)
-                
                 if (piece.pieceSide == Side.BLACK) {
-                    // Our pieces (AI is BLACK)
                     materialBalance += value
-                    // Reward active piece placement (BLACK advances down the board)
-                    if (square.rank.ordinal <= 4) {  // Ranks 1-5 (0-indexed)
-                        pieceActivity += 5
-                    }
                 } else {
-                    // Opponent pieces (WHITE)
                     materialBalance -= value
-                    // Penalize opponent active pieces (WHITE advances up the board)
-                    if (square.rank.ordinal >= 3) {  // Ranks 4-8 (0-indexed)
-                        pieceActivity -= 3
-                    }
                 }
             }
         }
+        score += materialBalance
         
-        score += materialBalance / 3
-        score += pieceActivity
+        // Mobility (how many moves do we have)
+        val mobility = MoveGenerator.generateLegalMoves(board).size
+        score += mobility * 2
         
-        // Check if move gives check (strong bonus)
-        if (board.isKingAttacked) {
-            score += 50
-        }
-        
-        // Bonus for controlling center squares
-        // AI plays as BLACK
-        val centerSquares = listOf(
-            Square.E4, Square.E5, Square.D4, Square.D5,
-            Square.C4, Square.C5, Square.F4, Square.F5
-        )
-        var centerControl = 0
+        // Center control
+        val centerSquares = listOf(Square.E4, Square.E5, Square.D4, Square.D5)
         for (sq in centerSquares) {
             val piece = board.getPiece(sq)
             if (piece != com.github.bhlangonijr.chesslib.Piece.NONE) {
                 if (piece.pieceSide == Side.BLACK) {
-                    centerControl += 8  // Our pieces in center
+                    score += 20
                 } else {
-                    centerControl -= 4  // Opponent pieces in center
+                    score -= 10
                 }
             }
         }
-        score += centerControl
+        
+        // Piece development (pieces off back rank)
+        var developedPieces = 0
+        for (file in listOf(com.github.bhlangonijr.chesslib.File.FILE_B, 
+                           com.github.bhlangonijr.chesslib.File.FILE_C,
+                           com.github.bhlangonijr.chesslib.File.FILE_D,
+                           com.github.bhlangonijr.chesslib.File.FILE_E,
+                           com.github.bhlangonijr.chesslib.File.FILE_F,
+                           com.github.bhlangonijr.chesslib.File.FILE_G)) {
+            val backRankSquare = Square.encode(com.github.bhlangonijr.chesslib.Rank.RANK_8, file)
+            val piece = board.getPiece(backRankSquare)
+            if (piece == com.github.bhlangonijr.chesslib.Piece.NONE || 
+                piece == com.github.bhlangonijr.chesslib.Piece.BLACK_KING ||
+                piece == com.github.bhlangonijr.chesslib.Piece.BLACK_ROOK) {
+                developedPieces++
+            }
+        }
+        score += developedPieces * 5
         
         board.undoMove()
+        
+        return score
+    }
+    
+    private fun selectExpertMove(moves: List<Move>): Move {
+        // Expert: Minimax with alpha-beta pruning (2 ply search)
+        var bestMove = moves.first()
+        var bestScore = Int.MIN_VALUE
+        
+        for (move in moves) {
+            board.doMove(move)
+            
+            // Evaluate opponent's best response
+            val score = -minimaxSearch(1, Int.MIN_VALUE, Int.MAX_VALUE)
+            
+            board.undoMove()
+            
+            if (score > bestScore) {
+                bestScore = score
+                bestMove = move
+            }
+        }
+        
+        return bestMove
+    }
+    
+    private fun minimaxSearch(depth: Int, alpha: Int, beta: Int): Int {
+        if (depth == 0 || board.isDraw || board.isMated) {
+            return evaluatePosition()
+        }
+        
+        val moves = MoveGenerator.generateLegalMoves(board)
+        if (moves.isEmpty()) return evaluatePosition()
+        
+        var maxScore = Int.MIN_VALUE
+        var alphaValue = alpha
+        
+        for (move in moves) {
+            board.doMove(move)
+            val score = -minimaxSearch(depth - 1, -beta, -alphaValue)
+            board.undoMove()
+            
+            if (score > maxScore) {
+                maxScore = score
+            }
+            
+            alphaValue = maxOf(alphaValue, score)
+            if (alphaValue >= beta) {
+                break  // Beta cutoff
+            }
+        }
+        
+        return maxScore
+    }
+    
+    private fun evaluatePosition(): Int {
+        // Complete position evaluation
+        var score = 0
+        
+        // Check for game over
+        if (board.isMated) {
+            return if (board.sideToMove == Side.BLACK) -100000 else 100000
+        }
+        if (board.isDraw) return 0
+        
+        // Material count
+        for (square in Square.values()) {
+            val piece = board.getPiece(square)
+            if (piece != com.github.bhlangonijr.chesslib.Piece.NONE) {
+                val value = getPieceValue(piece)
+                if (piece.pieceSide == Side.BLACK) {
+                    score += value
+                } else {
+                    score -= value
+                }
+            }
+        }
+        
+        // Mobility
+        val mobility = MoveGenerator.generateLegalMoves(board).size
+        score += if (board.sideToMove == Side.BLACK) mobility * 3 else -mobility * 3
+        
+        // Center control
+        for (sq in listOf(Square.E4, Square.E5, Square.D4, Square.D5)) {
+            val piece = board.getPiece(sq)
+            if (piece != com.github.bhlangonijr.chesslib.Piece.NONE) {
+                val bonus = 15
+                if (piece.pieceSide == Side.BLACK) {
+                    score += bonus
+                } else {
+                    score -= bonus
+                }
+            }
+        }
+        
+        // King safety
+        val blackKing = board.getPieceLocation(com.github.bhlangonijr.chesslib.Piece.BLACK_KING).firstOrNull()
+        val whiteKing = board.getPieceLocation(com.github.bhlangonijr.chesslib.Piece.WHITE_KING).firstOrNull()
+        
+        if (blackKing != null) {
+            val file = blackKing.file.ordinal
+            if (file in 0..2 || file in 5..7) score += 10
+        }
+        if (whiteKing != null) {
+            val file = whiteKing.file.ordinal
+            if (file in 0..2 || file in 5..7) score -= 10
+        }
         
         return score
     }
