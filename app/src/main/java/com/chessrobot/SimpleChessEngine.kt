@@ -177,9 +177,8 @@ class SimpleChessEngine {
             if (opponentMoves.isNotEmpty()) {
                 // Find opponent's best response
                 val bestOpponentScore = opponentMoves.maxOfOrNull { oppMove ->
-                    board.doMove(oppMove)
+                    // Evaluate the captured piece BEFORE executing the move
                     val capturedValue = getPieceValue(board.getPiece(oppMove.to))
-                    board.undoMove()
                     capturedValue
                 } ?: 0
                 // Penalize moves that allow strong opponent responses
@@ -227,11 +226,16 @@ class SimpleChessEngine {
     }
     
     private fun evaluateMoveDeep(move: Move): Int {
-        var score = evaluateMove(move)
+        var score = 0
         
-        // Capture value with multiplier
+        // Capture value with multiplier (not using evaluateMove to avoid double counting)
         val capturedPiece = board.getPiece(move.to)
         score += getPieceValue(capturedPiece) * 4
+        
+        // Center control
+        if (move.to in listOf(Square.E4, Square.E5, Square.D4, Square.D5)) {
+            score += 10
+        }
         
         // Simulate move and evaluate position
         board.doMove(move)
