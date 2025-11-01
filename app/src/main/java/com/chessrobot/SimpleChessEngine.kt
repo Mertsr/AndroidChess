@@ -175,22 +175,25 @@ class SimpleChessEngine {
             // Look ahead one more move for opponent responses
             val opponentMoves = MoveGenerator.generateLegalMoves(board)
             if (opponentMoves.isNotEmpty()) {
-                // Find opponent's best response
+                // Find opponent's best response (including checks and captures)
                 val bestOpponentScore = opponentMoves.maxOfOrNull { oppMove ->
-                    // Evaluate the captured piece BEFORE executing the move
-                    val capturedValue = getPieceValue(board.getPiece(oppMove.to))
-                    capturedValue
+                    var oppScore = 0
+                    // Evaluate the captured piece value
+                    oppScore += getPieceValue(board.getPiece(oppMove.to))
+                    // Check if opponent can give check
+                    board.doMove(oppMove)
+                    if (board.isKingAttacked) {
+                        oppScore += 20  // Opponent checking is bad for us
+                    }
+                    board.undoMove()
+                    oppScore
                 } ?: 0
                 // Penalize moves that allow strong opponent responses
                 score -= bestOpponentScore / 2
             }
             
-            // King safety
-            val kingSquare = if (board.sideToMove == Side.WHITE) {
-                board.getPieceLocation(com.github.bhlangonijr.chesslib.Piece.WHITE_KING).firstOrNull()
-            } else {
-                board.getPieceLocation(com.github.bhlangonijr.chesslib.Piece.BLACK_KING).firstOrNull()
-            }
+            // King safety - AI plays as BLACK, so check BLACK king
+            val kingSquare = board.getPieceLocation(com.github.bhlangonijr.chesslib.Piece.BLACK_KING).firstOrNull()
             
             if (kingSquare != null) {
                 // Prefer keeping king safe
@@ -241,6 +244,7 @@ class SimpleChessEngine {
         board.doMove(move)
         
         // Material count with better weighting
+        // AI plays as BLACK
         var materialBalance = 0
         var pieceActivity = 0
         
@@ -250,15 +254,17 @@ class SimpleChessEngine {
                 val value = getPieceValue(piece)
                 
                 if (piece.pieceSide == Side.BLACK) {
+                    // Our pieces (AI is BLACK)
                     materialBalance += value
-                    // Reward active piece placement
-                    if (square.rank.ordinal >= 3 && square.rank.ordinal <= 5) {
-                        pieceActivity += 5  // Black pieces advancing
+                    // Reward active piece placement (BLACK advances down the board)
+                    if (square.rank.ordinal <= 4) {  // Ranks 1-5 (0-indexed)
+                        pieceActivity += 5
                     }
                 } else {
+                    // Opponent pieces (WHITE)
                     materialBalance -= value
-                    // Penalize opponent active pieces
-                    if (square.rank.ordinal >= 2 && square.rank.ordinal <= 4) {
+                    // Penalize opponent active pieces (WHITE advances up the board)
+                    if (square.rank.ordinal >= 3) {  // Ranks 4-8 (0-indexed)
                         pieceActivity -= 3
                     }
                 }
@@ -274,15 +280,23 @@ class SimpleChessEngine {
         }
         
         // Bonus for controlling center squares
-        val controlledCenterSquares = listOf(
+        // AI plays as BLACK
+        val centerSquares = listOf(
             Square.E4, Square.E5, Square.D4, Square.D5,
             Square.C4, Square.C5, Square.F4, Square.F5
-        ).count { sq -> 
+        )
+        var centerControl = 0
+        for (sq in centerSquares) {
             val piece = board.getPiece(sq)
-            piece != com.github.bhlangonijr.chesslib.Piece.NONE && 
-            piece.pieceSide == Side.BLACK
+            if (piece != com.github.bhlangonijr.chesslib.Piece.NONE) {
+                if (piece.pieceSide == Side.BLACK) {
+                    centerControl += 8  // Our pieces in center
+                } else {
+                    centerControl -= 4  // Opponent pieces in center
+                }
+            }
         }
-        score += controlledCenterSquares * 8
+        score += centerControl
         
         board.undoMove()
         
